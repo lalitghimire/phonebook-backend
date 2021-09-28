@@ -1,8 +1,19 @@
 const express = require("express");
 const app = express();
 const PORT = 3001;
+const morgan = require("morgan");
 
 app.use(express.json());
+app.use(morgan("tiny"));
+morgan.token("postedData", (req) => {
+  if (req.method === "POST") return JSON.stringify(req.body);
+});
+
+app.use(
+  morgan(
+    ":method :url :status  :res[content-length] - :response-time ms :postedData"
+  )
+);
 
 // persons
 let persons = [
