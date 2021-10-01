@@ -66,21 +66,21 @@ app.get("/info", (req, res) => {
 //   res.send(persons);
 // });
 
-app.get("/api/persons", (request, response) => {
+app.get("/api/persons", (req, res) => {
   Person.find({}).then((persons) => {
-    response.json(persons);
+    res.json(persons);
   });
 });
 
 // route to display one person with id
 app.get("/api/persons/:id", (req, res) => {
-  const id = Number(req.params.id);
-  const person = persons.find((person) => person.id === id);
-  if (person) {
-    res.send(person);
-  } else {
-    res.status(404).send("Person not found");
-  }
+  Person.findById(req.params.id).then((person) => {
+    if (person) {
+      res.send(person);
+    } else {
+      res.status(404).send("Person not found");
+    }
+  });
 });
 
 // route to delete a person
@@ -94,12 +94,6 @@ app.delete("/api/persons/:id", (req, res) => {
 app.post("/api/persons", (req, res) => {
   const body = req.body;
 
-  const person = {
-    id: Math.floor(Math.random() * 9996) + 5,
-    name: body.name,
-    number: body.number,
-  };
-
   // check for missing info and if so send error response
   if (!body.name || !body.number) {
     return res.status(400).json({ error: "name or number missing" });
@@ -110,8 +104,20 @@ app.post("/api/persons", (req, res) => {
     return res.status(400).json({ error: "provide unique name" });
   }
 
-  persons = persons.concat(person);
-  res.send(person);
+  const person = new Person({
+    id: Math.floor(Math.random() * 9996) + 5,
+    name: body.name,
+    number: body.number,
+  });
+  // when using locally
+  //persons = persons.concat(person);
+  //res.send(person);
+
+  // saving to database
+  person.save().then((savedPerson) => {
+    console.log(savedPerson);
+    res.send(savedPerson);
+  });
 });
 
 app.listen(PORT, () => {
