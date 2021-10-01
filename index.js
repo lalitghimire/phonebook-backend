@@ -5,6 +5,7 @@ const cors = require("cors");
 
 const PORT = process.env.PORT || 3001;
 
+// middlewares
 app.use(express.json());
 app.use(cors());
 app.use(express.static("build"));
@@ -80,7 +81,7 @@ app.delete("/api/persons/:id", (req, res) => {
   res.status(204).end();
 });
 
-// route to add person to persosn list
+// route to add person to person list
 app.post("/api/persons", (req, res) => {
   const body = req.body;
 
