@@ -2,8 +2,10 @@ const express = require("express");
 const app = express();
 const morgan = require("morgan");
 const cors = require("cors");
+require("dotenv").config();
+const Person = require("./models/person");
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT;
 
 // middlewares
 app.use(express.json());
@@ -50,6 +52,7 @@ app.get("/", (req, res) => {
   res.send("<h1>Hello World!</h1>");
 });
 
+console.log(Person);
 // route which display some info on number of persons
 app.get("/info", (req, res) => {
   let dateNow = Date(Date.now());
@@ -59,8 +62,14 @@ app.get("/info", (req, res) => {
 });
 
 // route to display all persons
-app.get("/api/persons", (req, res) => {
-  res.send(persons);
+// app.get("/api/persons", (req, res) => {
+//   res.send(persons);
+// });
+
+app.get("/api/persons", (request, response) => {
+  Person.find({}).then((persons) => {
+    response.json(persons);
+  });
 });
 
 // route to display one person with id
