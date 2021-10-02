@@ -8,10 +8,21 @@ const Person = require("./models/person");
 const PORT = process.env.PORT;
 
 // middlewares
+app.use(express.static("build"));
 app.use(express.json());
 app.use(cors());
-app.use(express.static("build"));
 app.use(morgan("tiny"));
+
+const errorHandler = (error, req, res, next) => {
+  console.error(error.message);
+
+  if (error.name === "CastError") {
+    return res.status(400).send({ error: "malformatted id" });
+  }
+
+  next(error);
+};
+
 morgan.token("postedData", (req) => {
   if (req.method === "POST") return JSON.stringify(req.body);
 });
@@ -21,30 +32,6 @@ app.use(
     ":method :url :status  :res[content-length] - :response-time ms :postedData"
   )
 );
-
-// persons
-let persons = [
-  {
-    id: 1,
-    name: "Arto Hellas",
-    number: "040-123456",
-  },
-  {
-    id: 2,
-    name: "Ada Lovelace",
-    number: "39-44-5323523",
-  },
-  {
-    id: 3,
-    name: "Dan Abramov",
-    number: "12-43-234345",
-  },
-  {
-    id: 4,
-    name: "Mary Poppendieck",
-    number: "39-23-6423122",
-  },
-];
 
 //routes
 // route to home
@@ -73,21 +60,19 @@ app.get("/api/persons", (req, res) => {
 });
 
 // route to display one person with id
-app.get("/api/persons/:id", (req, res) => {
-  Person.findById(req.params.id).then((person) => {
-    if (person) {
-      res.send(person);
-    } else {
-      res.status(404).send("Person not found");
-    }
-  });
-});
-
-// route to delete a person
-app.delete("/api/persons/:id", (req, res) => {
-  const id = Number(req.params.id);
-  persons = persons.filter((person) => person.id !== id);
-  res.status(204).end();
+app.get("/api/persons/:id", (req, res, next) => {
+  Person.findById(req.params.id)
+    .then((person) => {
+      if (person) {
+        res.send(person);
+      } else {
+        res.status(404).end();
+      }
+    })
+    .catch((error) => {
+      console.log("this is error in id");
+      next(error);
+    });
 });
 
 // route to add person to person list
@@ -100,12 +85,11 @@ app.post("/api/persons", (req, res) => {
   }
 
   // check if duplicate name and if so send error response
-  if (persons.filter((person) => person.name === body.name).length > 0) {
-    return res.status(400).json({ error: "provide unique name" });
-  }
+  // if (persons.filter((person) => person.name === body.name).length > 0) {
+  //   return res.status(400).json({ error: "provide unique name" });
+  // }
 
   const person = new Person({
-    id: Math.floor(Math.random() * 9996) + 5,
     name: body.name,
     number: body.number,
   });
@@ -119,6 +103,39 @@ app.post("/api/persons", (req, res) => {
     res.send(savedPerson);
   });
 });
+
+// route to delete a person
+app.delete("/api/persons/:id", (req, res, next) => {
+  Person.findByIdAndRemove(req.params.id)
+    .then((result) => {
+      res.status(204).end();
+    })
+    .catch((error) => next(error));
+});
+
+// route to update
+
+app.put("/api/persons/:id", (req, res, next) => {
+  const body = req.body;
+  const person = {
+    name: body.name,
+    number: body.number,
+  };
+
+  Person.findByIdAndUpdate(req.params.id, person, { new: true })
+    .then((updatedPerson) => {
+      res.json(updatedPerson);
+    })
+    .catch((error) => next(error));
+});
+
+const unknownEndpoint = (req, res) => {
+  res.status(404).send({ error: "unknown endpoint" });
+};
+
+app.use(unknownEndpoint);
+
+app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
