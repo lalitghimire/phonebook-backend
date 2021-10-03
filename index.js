@@ -18,6 +18,8 @@ const errorHandler = (error, req, res, next) => {
 
   if (error.name === "CastError") {
     return res.status(400).send({ error: "malformatted id" });
+  } else if (error.name === "ValidationError") {
+    return res.status(400).json({ error: error.message });
   }
 
   next(error);
@@ -78,15 +80,15 @@ app.get("/api/persons/:id", (req, res, next) => {
 });
 
 // route to add person to person list
-app.post("/api/persons", (req, res) => {
+app.post("/api/persons", (req, res, next) => {
   const body = req.body;
 
   // check for missing info and if so send error response
-  if (!body.name || !body.number) {
-    return res.status(400).json({ error: "name or number missing" });
-  }
+  // if (!body.name || !body.number) {
+  //   return res.status(400).json({ error: "name or number missing" });
+  // }
 
-  // check if duplicate name and if so send error response
+  // check if duplicate name and if so send error response(before using mongoDB)
   // if (persons.filter((person) => person.name === body.name).length > 0) {
   //   return res.status(400).json({ error: "provide unique name" });
   // }
@@ -100,10 +102,13 @@ app.post("/api/persons", (req, res) => {
   //res.send(person);
 
   // saving to database
-  person.save().then((savedPerson) => {
-    console.log(savedPerson);
-    res.send(savedPerson);
-  });
+  person
+    .save()
+    .then((savedPerson) => {
+      console.log(savedPerson);
+      res.send(savedPerson);
+    })
+    .catch((error) => next(error));
 });
 
 // route to delete a person
@@ -115,8 +120,7 @@ app.delete("/api/persons/:id", (req, res, next) => {
     .catch((error) => next(error));
 });
 
-// route to update
-
+// route to update already existing name
 app.put("/api/persons/:id", (req, res, next) => {
   const body = req.body;
   const person = {
