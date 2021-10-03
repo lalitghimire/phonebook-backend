@@ -43,9 +43,11 @@ console.log(Person);
 // route which display some info on number of persons
 app.get("/info", (req, res) => {
   let dateNow = Date(Date.now());
-  res.send(
-    `<p>Phonebook has info for ${persons.length} people</p> ${dateNow}<p> </p>`
-  );
+  Person.find({}).then((persons) => {
+    res.send(
+      `<p>Phonebook has info for ${persons.length} people</p> ${dateNow}<p> </p>`
+    );
+  });
 });
 
 // route to display all persons
