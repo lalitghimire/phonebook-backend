@@ -13,6 +13,7 @@ app.use(express.json());
 app.use(cors());
 app.use(morgan("tiny"));
 
+// error handler function
 const errorHandler = (error, req, res, next) => {
   console.error(error.message);
 
@@ -25,6 +26,7 @@ const errorHandler = (error, req, res, next) => {
   next(error);
 };
 
+// new token using morgan
 morgan.token("postedData", (req) => {
   if (req.method === "POST") return JSON.stringify(req.body);
 });
@@ -123,6 +125,7 @@ app.delete("/api/persons/:id", (req, res, next) => {
 // route to update already existing name
 app.put("/api/persons/:id", (req, res, next) => {
   const body = req.body;
+  //self note: while updating with put don't use person = new Person but rather just js object
   const person = {
     name: body.name,
     number: body.number,
@@ -140,7 +143,6 @@ const unknownEndpoint = (req, res) => {
 };
 
 app.use(unknownEndpoint);
-
 app.use(errorHandler);
 
 app.listen(PORT, () => {
